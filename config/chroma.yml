@@ -1,0 +1,25 @@
+collection_name: agent
+persist_directory: chroma_db
+k: 3
+score_threshold: 0.85
+data_path: data/external
+md5_hex_store: md5.txt
+allow_knowledge_file_type: ['pdf', 'txt']
+
+chunk_size: 300
+chunk_overlap: 50
+separators: ['\n\n', '\n', '一、', '二、', '三、', '四、', '五、', 'Q', 'A', ' ', '']
+
+hybrid:
+  enabled: true
+  vector_top_k: 10
+  bm25_top_k: 10
+  rrf_k: 60
+
+# ═══════════ Reranker 精排配置（百炼云端 API）═══════════
+# Reranker：把 query + doc 拼一起编码，直接判断相关性（比 Embedding 精准 30%+）
+# 什么时候开：hybrid.enabled=true 时建议开
+reranker:
+  enabled: true
+  model_name: qwen3-rerank           # 百炼文本重排模型（API 形式）
+  top_n: 15                           # RRF 融合先取 15 条粗候选 → Reranker 精排 → 最终取 k=3
