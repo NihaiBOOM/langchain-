@@ -94,6 +94,24 @@ streamlit run app.py
 
 浏览器会自动打开 `http://localhost:8501`。
 
+> **首次启动**：程序会自动扫描 `data/external/` 下的 PDF / TXT 知识库文档，调用通义 Embedding 接口向量化并写入 ChromaDB（持久化到 `chroma_db/`）。已有文档内容的 MD5 已记录，下次启动不会重复加载。**首次启动会比较慢**（取决于知识库大小，可能 1~3 分钟）。
+
+## 运行流程
+
+```
+streamlit run app.py
+    ↓
+ReactAgent() 初始化
+    ↓
+VectorStoreService() 初始化
+    ├─ 连接 ChromaDB
+    ├─ 自动加载 data/external/ 知识库 → 向量化 → 写入 ChromaDB（仅首次或文档变更时）
+    ├─ 初始化 BM25 关键词索引
+    └─ 验证 Reranker 百炼 API 连通性
+    ↓
+用户输入问题 → Agent ReAct 推理 → 按需调用 RAG 工具检索 → LLM 总结回答
+```
+
 ## 环境要求
 
 - Python 3.12+

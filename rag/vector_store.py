@@ -14,34 +14,28 @@ from rank_bm25 import BM25Okapi
 
 class VectorStoreService:
     def __init__(self):
-        # 初始化 Chroma 向量库：持久化到 chroma_db 目录，用通义 embedding 做向量化
         self.vector_store = Chroma(
-            collection_name=chroma_conf["collection_name"],       # 配置文件: chroma.yml → collection_name
-            embedding_function=embed_model,                        # 通义 text-embedding-v4
-            persist_directory=chroma_conf["persist_directory"],    # 配置文件: chroma.yml → persist_directory
+            collection_name=chroma_conf["collection_name"],
+            embedding_function=embed_model,
+            persist_directory=chroma_conf["persist_directory"],
         )
-        # 文本分片器：chunk_size=300 保证一个完整答案不被切碎，separators 按"一、Q"等标题优先切
         self.spliter = RecursiveCharacterTextSplitter(
-            chunk_size=chroma_conf["chunk_size"],                  # 配置文件: chroma.yml → chunk_size
-            chunk_overlap=chroma_conf["chunk_overlap"],            # 配置文件: chroma.yml → chunk_overlap
-            separators=chroma_conf["separators"],                  # 配置文件: chroma.yml → separators
+            chunk_size=chroma_conf["chunk_size"],
+            chunk_overlap=chroma_conf["chunk_overlap"],
+            separators=chroma_conf["separators"],
             length_function=len,
         )
-        # BM25 关键词检索器（可选）：只有 hybrid.enabled=true 才初始化
-        # 作用：弥补纯向量检索漏召回关键词精确匹配的文档（比如用户搜"充电座"，向量可能漏掉只提"充电座"的文档）
+
+        self.load_document()
+
         self.bm25: BM25Okapi | None = None
         self.bm25_docs: list[Document] = []
-        self._hybrid_conf = chroma_conf.get("hybrid", {})       # 配置文件: chroma.yml → hybrid
+        self._hybrid_conf = chroma_conf.get("hybrid", {})
         if self._hybrid_conf.get("enabled", False):
             self._init_bm25()
 
-        # Reranker 精排模型（可选）：只有 reranker.enabled=true 才初始化
-        # 作用：Hybrid 粗召回 15 条 → Reranker CrossEncoder 精排 → 取真正最精准的 Top 3
-        # 为什么用 Reranker：Embedding 是 query 和 doc 分开编码的（快但粗糙），
-        # Reranker 是 query 和 doc 拼一起编码的（慢但精准），能把精准率从 75% 拉到 90%+
-        # 代价：模型 ~200MB，CPU 可跑，精排只对 Top 15 粗候选做（可控延迟）
-        self.reranker = None                                    # 类型: CrossEncoder | None
-        self._reranker_conf = chroma_conf.get("reranker", {})   # 配置文件: chroma.yml → reranker
+        self.reranker = None
+        self._reranker_conf = chroma_conf.get("reranker", {})
         if self._reranker_conf.get("enabled", False):
             self._init_reranker()
 
