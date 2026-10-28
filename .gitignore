@@ -10,3 +10,10 @@ md5.txt
 
 *.log
 .DS_Store
+
+.env
+.env.local
+.env.*
+
+*.bak
+*.tmp

@@ -71,17 +71,20 @@ pip install -r requirements.txt
 
 ### 3. 配置 API Key
 
-编辑 `config/rag.yml`，填入通义千问 DashScope 的 API Key：
+本项目通过环境变量 `DASHSCOPE_API_KEY` 读取通义千问 API Key，**不会硬编码在代码或 yml 中**。
 
-```yaml
-chat_model:
-  model: qwen-plus
-  dashscope_api_key: sk-xxxxxxxxxxxxxxxx
+```bash
+# Windows PowerShell
+$env:DASHSCOPE_API_KEY = "sk-xxxxxxxxxxxxxxxxxxxxxxxx"
 
-embedding_model:
-  model: text-embedding-v3
-  dashscope_api_key: sk-xxxxxxxxxxxxxxxx
+# Windows CMD
+set DASHSCOPE_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
+
+# Linux / macOS
+export DASHSCOPE_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 ```
+
+模型名称在 `config/rag.yml` 中配置（默认 `qwen3-max` + `text-embedding-v4`）。
 
 ### 4. 启动 Streamlit 应用
 
